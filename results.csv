@@ -23,3 +23,10 @@ cfg_mnet_loop_nossh_L6,runs/cfg_mnet_loop_nossh_s0/final.pth,6,0.884996337067473
 cfg_mnet_loop_nossh_L8,runs/cfg_mnet_loop_nossh_s0/final.pth,8,0.8855485236889736,0.8549147304934627,0.6748146003059067,20.0,cuda
 cfg_mnet_loop_nossh_L12,runs/cfg_mnet_loop_nossh_s0/final.pth,12,0.8848349052381735,0.8553367805836738,0.6743509396951224,22.2,cuda
 cfg_mnet_loop_nossh_L16,runs/cfg_mnet_loop_nossh_s0/final.pth,16,0.8846360129542735,0.8552120631452363,0.6740706721672556,23.1,cuda
+cfg_mnet_dloop_nossh_L1,runs/cfg_mnet_dloop_nossh_s0/final.pth,1,0.8782705542594573,0.8387832001901123,0.6644455652997971,20.3,cuda
+cfg_mnet_dloop_nossh_L2,runs/cfg_mnet_dloop_nossh_s0/final.pth,2,0.8804342854155013,0.8456145658205118,0.6706549025535404,19.3,cuda
+cfg_mnet_dloop_nossh_L4,runs/cfg_mnet_dloop_nossh_s0/final.pth,4,0.8847863485913466,0.8493959847342043,0.6725688495867237,18.1,cuda
+cfg_mnet_dloop_nossh_L6,runs/cfg_mnet_dloop_nossh_s0/final.pth,6,0.8825620861389242,0.8471995909491137,0.6641435072074803,18.3,cuda
+cfg_mnet_dloop_nossh_L8,runs/cfg_mnet_dloop_nossh_s0/final.pth,8,0.882977093065864,0.8489205778216692,0.6679558182736474,20.1,cuda
+cfg_mnet_dloop_nossh_L12,runs/cfg_mnet_dloop_nossh_s0/final.pth,12,0.88191370479766,0.8470811475195735,0.6625104286947179,22.7,cuda
+cfg_mnet_dloop_nossh_L16,runs/cfg_mnet_dloop_nossh_s0/final.pth,16,0.8840692667481924,0.8488234768757096,0.6697980198345357,23.5,cuda
