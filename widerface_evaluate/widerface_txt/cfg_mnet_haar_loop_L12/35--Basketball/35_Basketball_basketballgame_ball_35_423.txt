@@ -1,0 +1,3 @@
+35_Basketball_basketballgame_ball_35_423
+1
+401 119 311 426 0.9974406957626343 

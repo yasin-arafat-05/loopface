@@ -1,0 +1,10 @@
+model=weights/mobilenet0.25_Final.pth  haar=False  loop=False  L=0  -> ./widerface_evaluate/widerface_txt/mobile0.25_L0
+
+Evaluating mobile0.25_L0 ...
+==================== Results ====================
+Easy   Val AP: 0.9071555685123741
+Medium Val AP: 0.8817600566078264
+Hard   Val AP: 0.7370587875832095
+=================================================
+
+mobile0.25_L0:  Easy 0.9072  Medium 0.8818  Hard 0.7371  ->  appended to results.csv

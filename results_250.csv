@@ -1,0 +1,8 @@
+tag,model,L,easy,medium,hard,ms_per_img,device
+cfg_mnet_loop_nossh_L1_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,1,0.8965496923705458,0.8665556211656105,0.7036818100118223,1.7,cuda
+cfg_mnet_loop_nossh_L2_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,2,0.9000503657852379,0.8730729584427692,0.714007092572841,1.8,cuda
+cfg_mnet_loop_nossh_L4_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,4,0.9015788419454592,0.8730749860592675,0.7174345282890252,2.0,cuda
+cfg_mnet_loop_nossh_L6_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,6,0.9005466443867585,0.8727484967068294,0.715965637079851,2.2,cuda
+cfg_mnet_loop_nossh_L8_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,8,0.9015387070142288,0.8734611162986149,0.7155779657871625,2.4,cuda
+cfg_mnet_loop_nossh_L12_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,12,0.899582905822361,0.8721040746399732,0.7137618389259947,2.8,cuda
+cfg_mnet_loop_nossh_L16_e250,runs_e250/cfg_mnet_loop_nossh_s0/final.pth,16,0.899294757553092,0.872254562949643,0.7137796339467029,3.2,cuda
