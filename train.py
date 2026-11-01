@@ -2,7 +2,8 @@
 # Source: https://github.com/biubug6/Pytorch_Retinaface (train.py)
 # Copyright (c) 2019 Pytorch_Retinaface authors. MIT License, see LICENSE.MIT
 # Modified by Yasin Arafat, 2026: LoopFaceNet, random L per batch, seeds,
-#   per-epoch checkpoint + exact resume, CSV log, Windows-safe main()
+#   per-epoch checkpoint + exact resume, CSV log, Windows-safe main(),
+#   --single_batch overfit sanity check
 #
 from __future__ import print_function
 import os
@@ -45,6 +46,11 @@ def get_args():
     p.add_argument('--resume', default='', help='checkpoint path; empty = auto-resume from run folder')
     p.add_argument('--print_every', default=50, type=int)
     p.add_argument('--max_iters', default=0, type=int, help='stop after this many iterations (smoke test)')
+    p.add_argument('--single_batch', action='store_true',
+                   help='overfit sanity check: train on ONE fixed batch repeatedly (no epochs, no resume, '
+                        'constant LR). Loss should go close to 0 if the architecture/loss/targets are correct')
+    p.add_argument('--sb_iters', default=500, type=int,
+                   help='number of iterations in --single_batch mode')
     return p.parse_args()
 
 
@@ -77,19 +83,80 @@ def rng_state(gen):
 def set_rng_state(st, gen):
     random.setstate(st['python'])
     np.random.set_state(st['numpy'])
-    torch.set_rng_state(st['torch'].cpu())                     
+    torch.set_rng_state(st['torch'].cpu())
     if st['cuda'] is not None and torch.cuda.is_available():
         torch.cuda.set_rng_state_all([s.cpu() for s in st['cuda']])
     gen.set_state(st['loader'].cpu())
 
 
+def run_single_batch(args, cfg, net, optimizer, criterion, priors, dataset, bs, device, run_dir):
+    """Overfit test: grab ONE batch once (augmentation is frozen because we reuse the same tensors)
+    and train on it for args.sb_iters iterations with a constant LR."""
+    loader = DataLoader(dataset, bs, shuffle=False, num_workers=0, collate_fn=detection_collate)
+    images, targets = next(iter(loader))
+    images = images.to(device)
+    targets = [a.to(device) for a in targets]
+    n_faces = sum(int(t.shape[0]) for t in targets)
+
+    for g in optimizer.param_groups:
+        g['lr'] = args.lr
+
+    log_path = os.path.join(run_dir, 'single_batch_train_log.csv')
+    log = open(log_path, 'w')                      # always a fresh log in this mode
+    log.write('epoch,iter,L,loss_loc,loss_cls,loss_landm,loss_total,lr,sec_per_iter\n')
+
+    print(f'[single_batch] images={images.shape[0]}  faces={n_faces}  iters={args.sb_iters}  '
+          f'lr={args.lr:.0e} (constant)  run folder: {run_dir}')
+
+    net.train()
+    first_loss = None
+    last_it = 0
+    t_last = time.time()
+    for it in range(args.sb_iters):
+        L = random.randint(*cfg['loop_train_L']) if cfg.get('loop') else None
+        out = net(images, L=L)
+
+        loss_l, loss_c, loss_landm = criterion(out, priors, targets)
+        loss = cfg['loc_weight'] * loss_l + loss_c + loss_landm
+        if not torch.isfinite(loss):
+            raise RuntimeError(f'Loss is {loss.item()} at single-batch iter {it}; stopping.')
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if first_loss is None:
+            first_loss = loss.item()
+
+        if it % args.print_every == 0 or it == args.sb_iters - 1:
+            sec = (time.time() - t_last) / max(1, it - last_it)
+            t_last, last_it = time.time(), it
+            mem = torch.cuda.max_memory_allocated() / 2 ** 30
+            print(f'sb it {it}/{args.sb_iters}  L={L}  '
+                  f'loc {loss_l.item():.3f}  cls {loss_c.item():.3f}  ldm {loss_landm.item():.3f}  '
+                  f'total {loss.item():.3f}  {sec:.2f}s/it  mem {mem:.1f}GB')
+            log.write(f'0,{it},{L},{loss_l.item():.5f},{loss_c.item():.5f},'
+                      f'{loss_landm.item():.5f},{loss.item():.5f},{args.lr},{sec:.4f}\n')
+            log.flush()
+
+    log.close()
+    final_loss = loss.item()
+    torch.save(net.state_dict(), os.path.join(run_dir, 'single_batch.pth'))
+    print(f'[single_batch] total loss: {first_loss:.4f} -> {final_loss:.4f}  '
+          f'({final_loss / max(first_loss, 1e-12) * 100:.1f}% of the initial loss)')
+    print(f'[single_batch] done. Log: {log_path}')
+
+
 def main():
     args = get_args()
     cfg = dict(getattr(cfgs, args.config))
+
+    # override cfg epoch, decay1, decay2, batch_size if requested
     if args.epochs:
         cfg['epoch'] = args.epochs
         cfg['decay1'] = args.decay1 or round(0.76 * args.epochs)
         cfg['decay2'] = args.decay2 or round(0.88 * args.epochs)
+
     if args.batch_size:
         cfg['batch_size'] = args.batch_size
 
@@ -99,7 +166,9 @@ def main():
         raise SystemExit('No GPU found. MultiBoxLoss uses .cuda() internally, so training needs a GPU.')
     cudnn.benchmark = True
 
-    run_dir = os.path.join(args.out, f'{args.config}_s{args.seed}' + ('_smoke' if args.max_iters else ''))
+    prefix = 'single_batch_' if args.single_batch else ''
+    suffix = '' if args.single_batch else ('_smoke' if args.max_iters else '')
+    run_dir = os.path.join(args.out, f'{prefix}{args.config}_s{args.seed}{suffix}')
     os.makedirs(run_dir, exist_ok=True)
     with open(os.path.join(run_dir, 'run.json'), 'w') as f:
         json.dump({'args': vars(args), 'cfg': cfg, 'torch': torch.__version__,
@@ -115,12 +184,19 @@ def main():
 
     optimizer = optim.SGD([p for p in net.parameters() if p.requires_grad], lr=args.lr,
                           momentum=args.momentum, weight_decay=args.weight_decay)
+
     criterion = MultiBoxLoss(2, 0.35, True, 0, True, 7, 0.35, False)
     with torch.no_grad():
         priors = PriorBox(cfg, image_size=(cfg['image_size'], cfg['image_size'])).forward().to(device)
 
     dataset = WiderFaceDetection(args.training_dataset, preproc(cfg['image_size'], (104, 117, 123)))
     bs = cfg['batch_size']
+
+    # single-batch overfit mode: skip resume / epochs / checkpoints entirely
+    if args.single_batch:
+        run_single_batch(args, cfg, net, optimizer, criterion, priors, dataset, bs, device, run_dir)
+        return
+
     epoch_size = math.ceil(len(dataset) / bs)
     gen = torch.Generator()
     gen.manual_seed(args.seed)
@@ -205,6 +281,15 @@ def main():
     log.close()
     print(f'Training finished. Weights: {os.path.join(run_dir, "final.pth")}')
 
+""" 
+# 1. single batch overfit sanity check (loss should go close to 0 if the architecture/loss/targets are correct):
+python train.py --config cfg_mnet_haar_loop --single_batch --batch_size 8 --sb_iters 500 --print_every 10
 
-if __name__ == '__main__':          # required on Windows: DataLoader workers re-import this file
+# 2. smoke test: train for a few iterations and exit (no checkpoints, no resume):
+python train.py --config cfg_mnet_haar_loop --max_iters 100 --print_every 10
+
+
+"""
+
+if __name__ == '__main__':         
     main()

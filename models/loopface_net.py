@@ -20,6 +20,7 @@ from collections import OrderedDict
 from loopface.haar import HaarTransform
 from  models.retinaface import RetinaFace
 from loopface.dilated_loop import DilatedLoopFace
+from loopface.loopcnn import LoopCNNFace
 
 class HaarBranch(nn.Module):
     """ 
@@ -89,7 +90,15 @@ class LoopFaceNet(RetinaFace):
             self.body = HaarBody(self.body,cfg['name'])
 
 
-        if cfg.get('loop'):
+        if cfg.get('loopcnn'):
+                print("loopcnn")
+                self.loop = LoopCNNFace(cfg['out_channel'],
+                        sizes=tuple(tuple(s) for s in cfg.get('loopcnn_sizes', ((4,2,1),)*3)),
+                        num_slots=cfg.get('loopcnn_slots', 4),
+                        k=cfg.get('loopcnn_k', 1),
+                        tie_levels=cfg.get('loopcnn_tie_levels', True),
+                        tie_loops=cfg.get('loopcnn_tie_loops', True))
+        elif cfg.get('loop'):
             if cfg.get('loop_dilations'):
                 self.loop = DilatedLoopFace(cfg['out_channel'],
                                             train_L=tuple(cfg.get('loop_train_L', (1, 6))),
@@ -101,6 +110,7 @@ class LoopFaceNet(RetinaFace):
                                      test_L=cfg.get('loop_test_L', 4))
         else:
             self.loop = None 
+            
 
         self.use_ssh = cfg.get('ssh', True)
         if not self.use_ssh:            
