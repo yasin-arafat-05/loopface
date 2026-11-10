@@ -1,18 +1,31 @@
 # Copyright (c) 2026 Yasin Arafat
 # Licensed under the MIT License, see LICENSE
 """
-Recall per face-size bin on WIDER val, from prediction folders written by test_widerface.py.
-- **It's determine there are faces but our model give low scores.**
-- **It's heart the AP. **
-usage: 
-python -m analysis.custom.recall_by_size --tags cfg_mnet_L0 cfg_mnet_loop_nossh_L1 cfg_mnet_loop_nossh_L4
-python -m analysis.custom.recall_by_size --tags cfg_mnet_L0 cfg_mnet_loop_nossh_L1 cfg_mnet_loop_nossh_L4 --score_thr 0.02
-python -m analysis.custom.recall_by_size --tags cfg_mnet_L0 cfg_mnet_loop_nossh_L1 cfg_mnet_loop_nossh_L4 --score_thr 0.5
+Recall by face size on WIDER val (see diagnostics.recall_by_size).
 
-i) --tags: sub-folders of widerface_evaluate/widerface_txt/ (e.g. cfg_mnet_L0)
-ii) --score_thr: only consider detections with score >= score_thr (default 0.3)
-iii) Determine which model weak in which size of faces. 
-iv) Threshold 0.3/0.5 model is confident. Threshold 0.02 model is weak, but can detect more faces.
+Faces are grouped by size in pixels. For each group we count how many faces the model finds,
+i.e. a detection with score >= score_thr overlaps the face with IoU >= iou_thr.
+
+**Shows which face sizes a model misses (usually the tiny ones).**
+**Together with precision_by_score: does a model gain AP by finding more faces, or by fewer false alarms?**
+
+usage:
+python -m analysis.custom.recall_by_size --tags cfg_mnet_L0_seed0 cfg_mnet_loop_nossh_L1_seed0 cfg_mnet_loop_nossh_L4_seed0
+python -m analysis.custom.recall_by_size --tags cfg_mnet_L0_seed0 --score_thr 0.5
+
+arguments:
+--tags       one or more sub-folders of --pred_root (the prediction txt files of each model)
+--score_thr  only detections with score >= this count (default 0.3)
+--iou_thr    IoU needed to count a face as found (default 0.5)
+--out        CSV file the results are appended to (default outputs/recall_by_size.csv)
+
+printed table (one row per size bin, one column per tag):
+i)   size(px): face size bin in pixels
+ii)  GT:       number of ground-truth faces in the bin
+iii) <tag>:    recall of that model in the bin = faces found / GT
+
+CSV columns: tag, size_lo, size_hi, n_gt, recall, score_thr, iou_thr
+Each run appends rows, so a tag run twice appears twice; drop duplicates before comparing.
 """
 
 import os

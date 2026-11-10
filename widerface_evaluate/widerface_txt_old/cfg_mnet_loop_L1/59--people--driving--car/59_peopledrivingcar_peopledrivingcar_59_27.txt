@@ -1,0 +1,3 @@
+59_peopledrivingcar_peopledrivingcar_59_27
+1
+601 185 193 243 0.9999629259109497 

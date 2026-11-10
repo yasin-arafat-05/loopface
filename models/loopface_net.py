@@ -21,6 +21,8 @@ from loopface.haar import HaarTransform
 from  models.retinaface import RetinaFace
 from loopface.dilated_loop import DilatedLoopFace
 from loopface.loopcnn import LoopCNNFace
+from loopface.start_loop import PreLoop
+
 
 class HaarBranch(nn.Module):
     """ 
@@ -116,7 +118,18 @@ class LoopFaceNet(RetinaFace):
         if not self.use_ssh:            
             self.ssh1 = self.ssh2 = self.ssh3 = None
 
+        self.use_pre_loop = bool(cfg.get('pre_loop'))
+        if self.use_pre_loop:
+            assert cfg['name'] == 'mobilenet0.25' and not cfg.get('haar'), 'pre_loop: MobileNet without Haar only'
+            first = self.body.stage1[0]                      # stem: conv_bn(3, 8, stride 2)
+            loop = PreLoop(first[0].out_channels, cfg.get('loop_train_L', (1, 6)), cfg.get('loop_test_L', 4),
+                           cell=cfg.get('pre_loop_cell', 'plain'))
+            self.body.stage1[0] = nn.Sequential(first, loop)  # stem -> loop -> rest of MobileNet
+
     def forward(self, inputs,L=None):
+        if self.use_pre_loop:
+            self.body.stage1[0][1].L = L
+    
         out = self.body(inputs)
         fpn = self.fpn(out)
 

@@ -58,6 +58,15 @@ def build_net(args):
     elif 'state_dict' in sd:
         sd = sd['state_dict']
     sd = {k[len('module.'):] if k.startswith('module.') else k: v for k, v in sd.items()}
+
+    # old LoopCNN checkpoints used 'levels.X.core.'; the current code calls it 'levels.X.cores.0.'
+    model_keys = set(net.state_dict().keys())
+    fixed = {}
+    for k, v in sd.items():
+        k2 = re.sub(r'(\.levels\.\d+\.)core\.', r'\1cores.0.', k)
+        fixed[k2 if (k not in model_keys and k2 in model_keys) else k] = v
+    sd = fixed
+
     net.load_state_dict(sd, strict=True)
     return net, cfg
 

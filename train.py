@@ -139,7 +139,7 @@ def run_single_batch(args, cfg, net, optimizer, criterion, priors, dataset, bs, 
                       f'{loss_landm.item():.5f},{loss.item():.5f},{args.lr},{sec:.4f}\n')
             log.flush()
 
-    log.close()
+    log.close() 
     final_loss = loss.item()
     torch.save(net.state_dict(), os.path.join(run_dir, 'single_batch.pth'))
     print(f'[single_batch] total loss: {first_loss:.4f} -> {final_loss:.4f}  '
@@ -287,7 +287,6 @@ python train.py --config cfg_mnet_haar_loop --single_batch --batch_size 8 --sb_i
 
 # 2. smoke test: train for a few iterations and exit (no checkpoints, no resume):
 python train.py --config cfg_mnet_haar_loop --max_iters 100 --print_every 10
-
 
 """
 

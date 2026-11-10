@@ -1,11 +1,12 @@
 # Copyright (c) 2026 Yasin Arafat
 # Licensed under the MIT License, see LICENSE
 """
-
 False alarms and precision per score threshold on WIDER val (approximate, see diagnostics.precision_by_score).
 
 **No faces but model detected. It's hurt the AP.**
+**Model give score to all detections boxes. We, use a threshold to filter out low score detetions. like theshold>0.5" 
 **Two model AP is equal. But, by precision_by_score analysis we get the best models.**
+
 usage:
 python -m analysis.custom.precision_by_score --tags cfg_mnet_L0 cfg_mnet_loop_nossh_L1 cfg_mnet_loop_nossh_L4
 

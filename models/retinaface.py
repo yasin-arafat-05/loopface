@@ -90,7 +90,8 @@ class RetinaFace(nn.Module):
                 backbone.load_state_dict(new_state_dict)
         elif cfg['name'] == 'Resnet50':
             import torchvision.models as models
-            backbone = models.resnet50(pretrained=cfg['pretrain'])
+            weights = models.ResNet50_Weights.DEFAULT if cfg['pretrain'] else None
+            backbone = models.resnet50(weights=weights)
 
         # step:4 -> (Which part of the backbone give image for fpn) 
         # see the, data/config.py file

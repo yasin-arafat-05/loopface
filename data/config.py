@@ -13,8 +13,8 @@ cfg_mnet = {
     'batch_size': 32,
     'ngpu': 1,
     'epoch': 250,
-    'decay1': 61,
-    'decay2': 70,
+    'decay1': 190,
+    'decay2': 220,
     'image_size': 640,
     'pretrain': True,
     'return_layers': {'stage1': 1, 'stage2': 2, 'stage3': 3},
@@ -37,8 +37,8 @@ cfg_re50 = {
     'batch_size': 24,
     'ngpu': 4,
     'epoch': 100,
-    'decay1': 70,
-    'decay2': 90,
+    'decay1': 190,
+    'decay2': 220,
     'image_size': 840,
     'pretrain': True,
     'return_layers': {'layer2': 1, 'layer3': 2, 'layer4': 3},
@@ -61,19 +61,8 @@ cfg_re50_loop_nossh = dict(cfg_re50, ssh=False, haar=False, loop=True)
 
 # loopcnn:
 cfg_mnet_loopcnn_nossh = dict(cfg_mnet, ssh=False, haar=False, loopcnn=True) 
-
 cfg_mnet_loopcnn_ssh = dict(cfg_mnet, ssh=True, haar=False, loopcnn=True)        
 
-# capacity: params incraese, MACs 
-cfg_mnet_loopcnn_ssh_untielev  = dict(cfg_mnet_loopcnn_ssh, loopcnn_tie_levels=False)                            # B
-cfg_mnet_loopcnn_ssh_untieloop = dict(cfg_mnet_loopcnn_ssh, loopcnn_tie_loops=False)                             # C
-cfg_mnet_loopcnn_ssh_untieboth = dict(cfg_mnet_loopcnn_ssh, loopcnn_tie_levels=False, loopcnn_tie_loops=False)   # D
-
-# compute increase: 
-cfg_mnet_loopcnn_nossh_k2        = dict(cfg_mnet_loopcnn_ssh, loopcnn_k=2)                                         # E
-cfg_mnet_loopcnn_nossh_untielev_k2 = dict(cfg_mnet_loopcnn_ssh, loopcnn_tie_levels=False, loopcnn_k=2)             # F
-
-# memory slots
-cfg_mnet_loopcnn_ssh_S1 = dict(cfg_mnet_loopcnn_ssh, loopcnn_slots=1)
-cfg_mnet_loopcnn_ssh_S2 = dict(cfg_mnet_loopcnn_ssh, loopcnn_slots=2)
-cfg_mnet_loopcnn_ssh_S8 = dict(cfg_mnet_loopcnn_ssh, loopcnn_slots=8)
+# preloop 
+cfg_mnet_preloop     = dict(cfg_mnet, pre_loop=True)    # plain loop
+cfg_mnet_preloop_gru = dict(cfg_mnet, pre_loop=True, pre_loop_cell='gru')   # ConvGRU
